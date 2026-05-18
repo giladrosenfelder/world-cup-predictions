@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק הניחושים למונדיאל</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .user-display { border-right: 1px solid var(--border); border-left: none; padding-right: 1rem; padding-left: 0; }
+        .leaderboard-table, .leaderboard-table th, .leaderboard-table td { text-align: right; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation (Hidden when not logged in) -->
+    <nav id="navbar" class="hidden">
+        <div class="nav-brand">🏆 משחק הניחושים</div>
+        <div class="nav-links">
+            <button id="nav-dashboard" class="nav-btn active">משחקים וטבלה</button>
+            <button id="nav-admin" class="nav-btn admin-only hidden">פאנל ניהול</button>
+            <span id="user-display" class="user-display"></span>
+            <button id="btn-logout" class="nav-btn logout">התנתקות</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        
+        <!-- Auth View -->
+        <section id="view-auth" class="view active">
+            <div class="glass-card auth-card">
+                <div class="auth-header">
+                    <h1>ברוך שובך</h1>
+                    <p>הזן את הניחושים שלך וטפס בטבלת המובילים</p>
+                </div>
+                
+                <div id="quick-login-container" class="hidden" style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; border: 1px solid var(--border);">
+                    <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;">זיהינו שהתחברת בעבר כ-<strong id="quick-login-email" style="color:var(--text);"></strong></p>
+                    <button type="button" id="btn-quick-login" class="btn primary" style="width: 100%; margin-bottom: 1rem;">התחבר מחדש עכשיו</button>
+                    <button type="button" id="btn-show-normal-login" class="btn secondary" style="width: 100%; padding: 8px; font-size: 0.85rem;">היכנס עם משתמש אחר</button>
+                </div>
+                
+                <form id="auth-form">
+                    <div class="input-group">
+                        <label for="email">אימייל</label>
+                        <input type="email" id="email" required placeholder="user@example.com" style="direction: ltr;">
+                    </div>
+                    <div class="input-group">
+                        <label for="password">סיסמה</label>
+                        <input type="password" id="password" required placeholder="••••••••" style="direction: ltr;">
+                    </div>
+                    <div class="auth-actions">
+                        <button type="submit" id="btn-login" class="btn primary">כניסה</button>
+                        <button type="button" id="btn-register" class="btn secondary">הרשמה</button>
+                    </div>
+                    <p id="auth-error" class="error-msg hidden"></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- Dashboard View (Matches List) -->
+        <section id="view-dashboard" class="view hidden">
+            <header class="view-header">
+                <h2>ניחוש משחקים</h2>
+                <div class="user-stats">
+                    <span class="pill">הנקודות שלי: <strong id="my-points">0</strong></span>
+                </div>
+            </header>
+            
+            <div class="dashboard-split">
+                <div class="dashboard-matches">
+                    <datalist id="tournament-players">
+                        <!-- Populated dynamically by app.js -->
+                    </datalist>
+
+                    <div class="glass-card" style="margin-bottom: 2rem;">
+                        <h3>ניחושי טורניר</h3>
+                        <form id="user-tournament-form">
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label>מלך השערים (7 נק')</label>
+                                    <input type="text" id="user-top-scorer" list="tournament-players" placeholder="הכנס שם שחקן...">
+                                </div>
+                                <div class="input-group">
+                                    <label>מלך הבישולים (5 נק')</label>
+                                    <input type="text" id="user-top-assister" list="tournament-players" placeholder="הכנס שם שחקן...">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn secondary full-width">שמור ניחושי טורניר</button>
+                            <p id="user-tournament-msg" class="hidden" style="color:var(--success); font-size:0.9rem; margin-top:0.5rem; text-align:center;">נשמר בהצלחה!</p>
+                        </form>
+                    </div>
+
+                    <div class="filters">
+                        <select id="stage-filter">
+                            <option value="all">כל השלבים</option>
+                            <option value="Group Stage">שלב הבתים</option>
+                            <option value="Round of 32">32 האחרונות</option>
+                            <option value="Round of 16">שמינית גמר</option>
+                            <option value="Quarter-finals">רבע גמר</option>
+                            <option value="Semi-finals">חצי גמר</option>
+                            <option value="Final">גמר</option>
+                        </select>
+                    </div>
+
+                    <div id="matches-container" class="grid-container">
+                        <!-- Matches rendered by JS -->
+                    </div>
+                </div>
+
+                <div class="dashboard-leaderboard">
+                    <div id="leaderboard-card" class="glass-card table-container" style="transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; cursor: pointer;" onclick="document.getElementById('leaderboard-card').classList.toggle('expanded-table')">
+                            <h3>טבלת המובילים</h3>
+                            <span id="expand-icon" style="color: var(--text-muted); font-size: 1.2rem;">⛶</span>
+                        </div>
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>דירוג</th>
+                                    <th>משתמש</th>
+                                    <th>סך נקודות</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body">
+                                <!-- Rankings rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin View -->
+        <section id="view-admin" class="view hidden">
+            <header class="view-header">
+                <h2>פאנל ניהול</h2>
+            </header>
+
+            <div class="admin-grid">
+                <!-- Tournament Results Form -->
+                <div class="glass-card" style="grid-column: 1 / -1; margin-bottom: 1rem;">
+                    <h3>תוצאות טורניר סופיות</h3>
+                    <form id="admin-tournament-form">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>מלך השערים האמיתי</label>
+                                <input type="text" id="admin-top-scorer" list="tournament-players" placeholder="הכנס שם שחקן...">
+                            </div>
+                            <div class="input-group">
+                                <label>מלך הבישולים האמיתי</label>
+                                <input type="text" id="admin-top-assister" list="tournament-players" placeholder="הכנס שם שחקן...">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn primary full-width">עדכן תוצאות טורניר (יפעיל חישוב נקודות)</button>
+                    </form>
+                </div>
+
+                <!-- Add Match Form -->
+                <div class="glass-card">
+                    <h3>צור משחק חדש</h3>
+                    <form id="admin-add-match-form">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>קבוצה 1</label>
+                                <input type="text" id="admin-t1" required>
+                            </div>
+                            <div class="input-group">
+                                <label>קבוצה 2</label>
+                                <input type="text" id="admin-t2" required>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>שלב</label>
+                                <select id="admin-stage" required>
+                                    <option value="Group Stage">שלב הבתים</option>
+                                    <option value="Round of 32">32 האחרונות</option>
+                                    <option value="Round of 16">שמינית גמר</option>
+                                    <option value="Quarter-finals">רבע גמר</option>
+                                    <option value="Semi-finals">חצי גמר</option>
+                                    <option value="Final">גמר</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>תאריך ושעה</label>
+                                <input type="datetime-local" id="admin-date" required style="direction: ltr;">
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>סיכוי קבוצה 1 (%)</label>
+                                <input type="number" id="admin-p1" min="1" max="99" required placeholder="דוגמה 45">
+                            </div>
+                            <div class="input-group">
+                                <label>סיכוי תיקו (%)</label>
+                                <input type="number" id="admin-px" min="1" max="99" required placeholder="דוגמה 30">
+                            </div>
+                            <div class="input-group">
+                                <label>סיכוי קבוצה 2 (%)</label>
+                                <input type="number" id="admin-p2" min="1" max="99" required placeholder="דוגמה 25">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn primary full-width">הוסף משחק</button>
+                    </form>
+                </div>
+
+                <!-- Resolve Matches List -->
+                <div class="glass-card">
+                    <h3>עדכן תוצאות סיום</h3>
+                    <div id="admin-matches-container" class="admin-matches-list">
+                        <!-- Upcoming matches rendered here for admin to enter results -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal for predicting/resolving -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="glass-card modal-content">
+            <h3 id="modal-title">נחש תוצאה</h3>
+            <div class="modal-match-info" id="modal-subtitle" style="direction: ltr;">Team A vs Team B</div>
+            
+            <form id="modal-form">
+                <input type="hidden" id="modal-match-id">
+                
+                <div class="score-inputs" style="direction: ltr;">
+                    <div class="team-score">
+                        <label id="modal-team1-label">Team A</label>
+                        <input type="number" id="modal-score1" min="0" required>
+                    </div>
+                    <span>-</span>
+                    <div class="team-score">
+                        <label id="modal-team2-label">Team B</label>
+                        <input type="number" id="modal-score2" min="0" required>
+                    </div>
+                </div>
+
+                <!-- Knockout special section (Extra Time / Pens) -->
+                <div id="modal-knockout-options" class="hidden additional-options">
+                    <p class="hint">תוצאת ההארכה (120 דקות):</p>
+                    <div class="score-inputs" style="direction: ltr; margin-bottom: 0.5rem; justify-content: center;">
+                        <input type="number" id="modal-score1-et" min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                        <span>-</span>
+                        <input type="number" id="modal-score2-et" min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <div id="modal-penalties-options" class="hidden additional-options">
+                    <p class="hint">תוצאת הפנדלים (במקרה של תיקו בהארכה):</p>
+                    <div class="score-inputs" style="direction: ltr; margin-bottom: 0; justify-content: center;">
+                        <input type="number" id="modal-score1-p" min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                        <span>-</span>
+                        <input type="number" id="modal-score2-p" min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="btn-modal-cancel" class="btn secondary">ביטול</button>
+                    <button type="submit" id="btn-modal-save" class="btn primary">שמור ניחוש</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="modal-user-profile" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <header class="modal-header">
+                <h3 id="modal-user-title">היסטוריית הניחושים</h3>
+                <button type="button" class="btn-close" onclick="document.getElementById('modal-user-profile').classList.add('hidden')">✕</button>
+            </header>
+            <div id="modal-user-predictions-list" class="grid-container" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Resolve Match Modal -->
+    <div id="modal-admin-resolve" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+            <header class="modal-header">
+                <h3>עדכון תוצאה מורחב</h3>
+                <button type="button" class="btn-close" id="btn-admin-modal-close">✕</button>
+            </header>
+            <form id="admin-resolve-form">
+                <p id="admin-resolve-subtitle" style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;"></p>
+                
+                <div class="score-input-container">
+                    <div class="team-score">
+                        <label id="admin-resolve-team1-label"></label>
+                        <input type="number" id="admin-score1" required min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                    </div>
+                    <span>-</span>
+                    <div class="team-score">
+                        <label id="admin-resolve-team2-label"></label>
+                        <input type="number" id="admin-score2" required min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <div id="admin-knockout-options" class="hidden">
+                    <hr style="border:0; border-top: 1px solid var(--border); margin: 1.5rem 0;">
+                    <h4 style="text-align:center; margin-bottom:1rem;">הארכה (120 דק')</h4>
+                    <div class="score-input-container">
+                        <input type="number" id="admin-score1-et" min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                        <span>-</span>
+                        <input type="number" id="admin-score2-et" min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                    </div>
+                    <hr style="border:0; border-top: 1px solid var(--border); margin: 1.5rem 0;">
+                    <h4 style="text-align:center; margin-bottom:1rem;">פנדלים (בלי כובשים)</h4>
+                    <div class="score-input-container">
+                        <input type="number" id="admin-score1-p" min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                        <span>-</span>
+                        <input type="number" id="admin-score2-p" min="0" style="width: 60px; height: 50px; font-size: 1.5rem; text-align: center; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <hr style="border:0; border-top: 1px solid var(--border); margin: 1.5rem 0;">
+                <h4 style="text-align:center; margin-bottom:1rem;">כובשים ומבשלים (זמן חוקי והארכה)</h4>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1; text-align: center;">
+                        <strong id="admin-scorers-team1-title">קבוצה 1</strong>
+                        <div id="admin-scorers-list-1" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;"></div>
+                        <button type="button" class="btn secondary" style="margin-top: 0.5rem; width: 100%; font-size: 0.8rem;" id="btn-add-scorer-1">+ כובש</button>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <strong id="admin-scorers-team2-title">קבוצה 2</strong>
+                        <div id="admin-scorers-list-2" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;"></div>
+                        <button type="button" class="btn secondary" style="margin-top: 0.5rem; width: 100%; font-size: 0.8rem;" id="btn-add-scorer-2">+ כובש</button>
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 2rem;">
+                    <button type="button" id="btn-admin-modal-cancel" class="btn secondary">ביטול</button>
+                    <button type="submit" id="btn-admin-modal-save" class="btn primary">שמור תוצאה סופית</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/store.js"></script>
+    <script src="js/scoring.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
