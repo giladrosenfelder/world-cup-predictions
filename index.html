@@ -38,8 +38,8 @@
                     <p>הזן את הניחושים שלך וטפס בטבלת המובילים</p>
                 </div>
                 
-                <div id="quick-login-container" class="hidden" style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; border: 1px solid var(--border);">
-                    <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;">זיהינו שהתחברת בעבר כ-<strong id="quick-login-email" style="color:var(--text);"></strong></p>
+                <div id="quick-login-container" class="hidden quick-login-box">
+                    <p class="quick-login-hint">זיהינו שהתחברת בעבר כ-<strong id="quick-login-email"></strong></p>
                     <button type="button" id="btn-quick-login" class="btn primary" style="width: 100%; margin-bottom: 1rem;">התחבר מחדש עכשיו</button>
                     <button type="button" id="btn-show-normal-login" class="btn secondary" style="width: 100%; padding: 8px; font-size: 0.85rem;">היכנס עם משתמש אחר</button>
                 </div>
@@ -91,7 +91,7 @@
                                 </div>
                             </div>
                             <button type="submit" class="btn secondary full-width">שמור ניחושי טורניר</button>
-                            <p id="user-tournament-msg" class="hidden" style="color:var(--success); font-size:0.9rem; margin-top:0.5rem; text-align:center;">נשמר בהצלחה!</p>
+                            <p id="user-tournament-msg" class="hidden success-msg">נשמר בהצלחה!</p>
                         </form>
                     </div>
 
@@ -271,7 +271,7 @@
 
     <!-- User Profile Modal -->
     <div id="modal-user-profile" class="modal-overlay hidden">
-        <div class="modal-card" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-card modal-card--wide">
             <header class="modal-header">
                 <h3 id="modal-user-title">היסטוריית הניחושים</h3>
                 <button type="button" class="btn-close" onclick="document.getElementById('modal-user-profile').classList.add('hidden')">✕</button>
@@ -284,13 +284,13 @@
 
     <!-- Admin Resolve Match Modal -->
     <div id="modal-admin-resolve" class="modal-overlay hidden">
-        <div class="modal-card" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-card modal-card--medium">
             <header class="modal-header">
                 <h3>עדכון תוצאה מורחב</h3>
                 <button type="button" class="btn-close" id="btn-admin-modal-close">✕</button>
             </header>
             <form id="admin-resolve-form">
-                <p id="admin-resolve-subtitle" style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;"></p>
+                <p id="admin-resolve-subtitle" class="modal-subtitle"></p>
                 
                 <div class="score-input-container">
                     <div class="team-score">
