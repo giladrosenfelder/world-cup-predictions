@@ -57,11 +57,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             updateUserPoints();
             showView('dashboard');
+            // Sync fixtures from API in background, then re-render
+            footballAPI.syncFixtures().then(synced => {
+                if (synced) {
+                    renderMatches();
+                    renderLeaderboard();
+                }
+            });
+            // Populate players autocomplete from API (falls back to PLAYERS_DB)
+            footballAPI.getPlayersForAutocomplete().then(players => {
+                if (players.length) updatePlayersDatalist(players);
+            });
         } else {
             showView('auth');
         }
         renderLeaderboard();
         initTournamentPlayersList();
+    }
+
+    function updatePlayersDatalist(players) {
+        const datalist = document.getElementById('tournament-players');
+        if (!datalist) return;
+        datalist.innerHTML = '';
+        players.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            datalist.appendChild(opt);
+        });
     }
 
     function initTournamentPlayersList() {
@@ -328,6 +350,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let btnHtml = '';
             let matchTeamsHtml = '';
 
+            // Helper: team badge (API logo OR flag fallback)
+            const teamBadge = (name, logo) => logo
+                ? `<img src="${logo}" alt="${name}" style="width:26px;height:26px;object-fit:contain;vertical-align:middle;margin:0 5px;">`
+                : store.getTeamFlag(name);
+
             if (m.status === 'finished') {
                 let scorersHtml = '';
                 if ((m.scorers_t1 && m.scorers_t1.length > 0) || (m.scorers_t2 && m.scorers_t2.length > 0)) {
@@ -353,16 +380,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 matchTeamsHtml = `
                 <div class="match-teams">
-                    <span>${store.getTeamFlag(m.team1)} ${m.team1} <strong>${m.score1}</strong></span>
+                    <span>${teamBadge(m.team1, m.team1Logo)} ${m.team1} <strong>${m.score1}</strong></span>
                     <span class="match-vs">-</span>
-                    <span><strong>${m.score2}</strong> ${m.team2} ${store.getTeamFlag(m.team2)}</span>
+                    <span><strong>${m.score2}</strong> ${m.team2} ${teamBadge(m.team2, m.team2Logo)}</span>
                 </div>`;
             } else {
                 matchTeamsHtml = `
                 <div class="match-teams">
-                    <span>${store.getTeamFlag(m.team1)} ${m.team1}</span>
+                    <span>${teamBadge(m.team1, m.team1Logo)} ${m.team1}</span>
                     <span class="match-vs">vs</span>
-                    <span>${store.getTeamFlag(m.team2)} ${m.team2}</span>
+                    <span>${m.team2} ${teamBadge(m.team2, m.team2Logo)}</span>
                 </div>`;
 
                 if (pred) {
