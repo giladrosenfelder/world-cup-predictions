@@ -3,7 +3,7 @@
 const API_KEY    = '067da40ed79f82a6c13ff3eb0eb3e26f';
 const BASE_URL   = 'https://v3.football.api-sports.io';
 const WC_LEAGUE  = 1;       // FIFA World Cup
-const WC_SEASON  = 2026;
+const WC_SEASON  = 2022;
 const CACHE_TTL  = 60 * 60 * 1000; // 1 hour in ms
 
 class FootballAPI {
